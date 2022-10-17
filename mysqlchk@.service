@@ -1,0 +1,15 @@
+[Unit]
+Description=MySQL Health Check Service
+After=mysql.service
+Requires=mysqlchk.socket
+
+[Service]
+Type=simple
+User=prometheus
+RemainAfterExit=yes
+ExecStart=/opt/mysqlchk.sh
+Restart=always
+StandardInput=socket
+
+[Install]
+WantedBy=multi-user.target

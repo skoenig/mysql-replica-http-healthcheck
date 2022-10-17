@@ -1,0 +1,10 @@
+[Unit]
+Description=MySQL Health Check Socket
+PartOf=mysqlchk@.service
+
+[Socket]
+ListenStream=0.0.0.0:9876
+Accept=true
+
+[Install]
+WantedBy=sockets.target
