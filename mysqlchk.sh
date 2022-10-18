@@ -26,6 +26,11 @@ http_response () {
     exit 0
 }
 
+if [[ -f /var/tmp/replica-ok ]]
+then
+    http_response 200 "Replica OK"
+fi
+
 slave_lag=$(mysql -S /var/run/mysqld/mysqld.sock -e "SHOW SLAVE STATUS\G" -ss 2>/dev/null \
     | grep 'Seconds_Behind_Master' \
     | awk '{ print $2 }')
@@ -35,6 +40,7 @@ exit_code=$?
 if [[ "$exit_code" != "0" ]]
 then
     http_response 404 "MySQL error"
+    rm -f /var/tmp/replica-ok
 fi
 
 # Status not ok, return 'HTTP 503'
@@ -47,4 +53,5 @@ fi
 if [[ -n "$slave_lag" && $slave_lag -le $ACCEPTABLE_LAG ]]
 then
     http_response 200 "Replica OK"
+    touch /var/tmp/replica-ok
 fi
