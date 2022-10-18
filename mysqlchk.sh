@@ -6,6 +6,7 @@ ACCEPTABLE_LAG=59
 http_response () {
     HTTP_CODE=$1
     MESSAGE=${2:-Message Undefined}
+    length=${#MESSAGE}
     if [[ "$HTTP_CODE" -eq 503 ]]
     then
       echo -en "HTTP/1.1 503 Service Unavailable\r\n"
@@ -19,9 +20,9 @@ http_response () {
       echo -en "HTTP/1.1 ${HTTP_CODE} UNKNOWN\r\n"
     fi
     echo -en "Content-Type: Content-Type: text/plain\r\n"
+    echo -en "Content-Length: ${length}\r\n"
     echo -en "\r\n"
     echo -en "$MESSAGE"
-    echo -en "\r\n"
 }
 
 slave_lag=$(mysql -S /var/run/mysqld/mysqld.sock -e "SHOW SLAVE STATUS\G" -ss 2>/dev/null \
