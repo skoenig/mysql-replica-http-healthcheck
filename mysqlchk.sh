@@ -23,6 +23,7 @@ http_response () {
     echo -en "Content-Length: ${length}\r\n"
     echo -en "\r\n"
     echo -en "$MESSAGE"
+    exit 0
 }
 
 slave_lag=$(mysql -S /var/run/mysqld/mysqld.sock -e "SHOW SLAVE STATUS\G" -ss 2>/dev/null \
