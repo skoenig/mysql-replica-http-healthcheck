@@ -3,37 +3,25 @@ set -o pipefail
 
 ACCEPTABLE_LAG=59
 
-#
-# Status ok, return 'HTTP 200'
-#
-http_200 () {
-    echo -e "HTTP/1.1 200 OK\r\n"
-    echo -e "Content-Type: Content-Type: text/plain\r\n"
-    echo -e "\r\n"
-    echo -e "$1"
-    echo -e "\r\n"
-}
-
-#
-# Status not ok, return 'HTTP 503'
-#
-http_503 () {
-    echo -e "HTTP/1.1 503 Service Unavailable\r\n"
-    echo -e "Content-Type: Content-Type: text/plain\r\n"
-    echo -e "\r\n"
-    echo -e "$1"
-    echo -e "\r\n"
-}
-
-#
-# Server not found, maybe MySQL is down, return 'HTTP 404'
-#
-http_404 () {
-    echo -e "HTTP/1.1 404 Not Found\r\n"
-    echo -e "Content-Type: Content-Type: text/plain\r\n"
-    echo -e "\r\n"
-    echo -e "$1"
-    echo -e "\r\n"
+http_response () {
+    HTTP_CODE=$1
+    MESSAGE=${2:-Message Undefined}
+    if [[ "$HTTP_CODE" -eq 503 ]]
+    then
+      echo -en "HTTP/1.1 503 Service Unavailable\r\n"
+    elif [[ "$HTTP_CODE" -eq 404 ]]
+    then
+      echo -en "HTTP/1.1 404 Not Found\r\n"
+    elif [[ "$HTTP_CODE" -eq 200 ]]
+    then
+      echo -en "HTTP/1.1 200 OK\r\n"
+    else
+      echo -en "HTTP/1.1 ${HTTP_CODE} UNKNOWN\r\n"
+    fi
+    echo -en "Content-Type: Content-Type: text/plain\r\n"
+    echo -en "\r\n"
+    echo -en "$MESSAGE"
+    echo -en "\r\n"
 }
 
 slave_lag=$(mysql -S /var/run/mysqld/mysqld.sock -e "SHOW SLAVE STATUS\G" -ss 2>/dev/null \
@@ -41,17 +29,20 @@ slave_lag=$(mysql -S /var/run/mysqld/mysqld.sock -e "SHOW SLAVE STATUS\G" -ss 2>
     | awk '{ print $2 }')
 exit_code=$?
 
+# Server not found, maybe MySQL is down, return 'HTTP 404'
 if [[ "$exit_code" != "0" ]]
 then
-    http_404 "MySQL error"
+    http_response 404 "MySQL error"
 fi
 
+# Status not ok, return 'HTTP 503'
 if [[ -n "$slave_lag" && $slave_lag -gt $ACCEPTABLE_LAG ]]
 then
-    http_503 "Replica lagging"
+    http_response 503 "Replica lagging"
 fi
 
+# Status ok, return 'HTTP 200'
 if [[ -n "$slave_lag" && $slave_lag -le $ACCEPTABLE_LAG ]]
 then
-    http_200 "Replica OK"
+    http_response 200 "Replica OK"
 fi
