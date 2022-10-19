@@ -14,4 +14,7 @@ systemctl enable --now mysqlchk.socket
 
 Ensure that the user (by default 'prometheus') for the `mysqlchk` service has permissions to execute `SHOW SLAVE STATUS` on the local MySQL instance.
 
-The healthcheck service will expose the status as port `9876`.
+## Usage
+Set up an application load balancer to regularly poll port `9876` of the MySQL Replica instance group to determine their health based on the returned HTTP status code.
+
+It is possible to create a flag file to signal maintenance mode, e.g. when a replica needs to be replaced or updated: `touch /var/tmp/replica-maintenance`.

@@ -26,6 +26,11 @@ http_response () {
     exit 0
 }
 
+if [[ -f /var/tmp/replica-maintenance ]]
+then
+    http_response 503 "Replica maintenance"
+fi
+
 if [[ -f /var/tmp/replica-ok ]]
 then
     http_response 200 "Replica OK"
