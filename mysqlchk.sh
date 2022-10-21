@@ -51,7 +51,7 @@ fi
 # Status not ok, return 'HTTP 503'
 if [[ -n "$replica_lag" && $replica_lag -gt $ACCEPTABLE_LAG ]]
 then
-    http_response 503 "Replica lagging"
+    http_response 503 "Replica lagging: $replica_lag"
 fi
 
 # Status ok, return 'HTTP 200'
