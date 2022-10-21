@@ -44,8 +44,8 @@ exit_code=$?
 # Server not found, maybe MySQL is down, return 'HTTP 404'
 if [[ "$exit_code" != "0" ]]
 then
-    http_response 404 "MySQL error"
     rm -f /var/tmp/replica-ok
+    http_response 404 "MySQL error"
 fi
 
 # Status not ok, return 'HTTP 503'
@@ -57,6 +57,6 @@ fi
 # Status ok, return 'HTTP 200'
 if [[ -n "$replica_lag" && $replica_lag -le $ACCEPTABLE_LAG ]]
 then
-    http_response 200 "Replica OK"
     touch /var/tmp/replica-ok
+    http_response 200 "Replica OK"
 fi
