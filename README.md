@@ -1,8 +1,13 @@
 # MySQL Replica HTTP Healthcheck
 
-This repository contains the setup for a healthchecking MySQL replicas over HTTP. Application loadbalancers can use the HTTP status to monitor the replicas, to ensure that not only mysql is running and available, but also that the replication is no lagging to far behind the primary instance.
+This is a simple HTTP-based MySQL replica health check, consisting of a bash script, a systemd socket and a companion service.
 
-The setup consists of a simple bash script that acts as an HTTP server, a systemd socket and a companion service.
+## Motivation
+HTTP as the protocol for this health check is used to provide rich status information beyond simple connectivity checks, allowing validation of replication lag. Load balancers commonly work with HTTP health checks for intelligent traffic routing. Running the check as a separate service also maintains clean separation from the MySQL process while retaining full monitoring capabilities.
+
+The health check is implemented using systemd socket activation, to provide an efficient and robust way to serve HTTP requests. This approach conserves system resources by starting the service only when needed, while systemd handles all low-level socket management. For some background on socket activation, see:
+- http://0pointer.de/blog/projects/inetd.html
+- https://mgdm.net/weblog/systemd-socket-activation/
 
 ## Installation
 ```
