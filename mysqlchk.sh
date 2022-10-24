@@ -7,7 +7,10 @@ http_response () {
     HTTP_CODE=$1
     MESSAGE=${2:-Message Undefined}
     length=${#MESSAGE}
-    if [[ "$HTTP_CODE" -eq 503 ]]
+    if [[ "$HTTP_CODE" -eq 500 ]]
+    then
+      echo -en "HTTP/1.1 500 Internal Server Error\r\n"
+    elif [[ "$HTTP_CODE" -eq 503 ]]
     then
       echo -en "HTTP/1.1 503 Service Unavailable\r\n"
     elif [[ "$HTTP_CODE" -eq 404 ]]
@@ -46,6 +49,12 @@ if [[ "$exit_code" != "0" ]]
 then
     rm -f /var/tmp/replica-ok
     http_response 404 "MySQL error"
+fi
+
+# Replication broken, return 'HTTP 500'
+if [[ -n "$replica_lag" && $replica_lag == "NULL" ]]
+then
+    http_response 500 "Replica not syncing"
 fi
 
 # Status not ok, return 'HTTP 503'
