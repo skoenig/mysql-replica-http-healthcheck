@@ -22,18 +22,22 @@ source "qemu" "debian" {
     "/cloud-init/user-data" = file("http/cloud-init/user-data")
     "/cloud-init/meta-data" = file("http/cloud-init/meta-data")
   }
-  boot_wait        = "5s"
-  disk_image       = true
-  disk_interface   = "virtio"
-  net_device       = "virtio-net"
-  qemuargs         = [["-smbios", "type=1,serial=ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/cloud-init/"]]
-  ssh_username     = "debian"
-  ssh_password     = "packer"
-  ssh_timeout      = "1m"
-  shutdown_command = "echo 'packer' | sudo -S shutdown -P now"
-  format           = "qcow2"
-  vm_name          = "mysql.qcow2"
-  headless         = local.headless
+  boot_wait          = "5s"
+  disk_image         = true
+  disk_compression   = true
+  skip_compaction    = false
+  disk_detect_zeroes = "unmap"
+  disk_discard       = "unmap"
+  disk_interface     = "virtio"
+  net_device         = "virtio-net"
+  qemuargs           = [["-smbios", "type=1,serial=ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/cloud-init/"]]
+  ssh_username       = "debian"
+  ssh_password       = "packer"
+  ssh_timeout        = "1m"
+  shutdown_command   = "echo 'packer' | sudo -S shutdown -P now"
+  format             = "qcow2"
+  vm_name            = "mysql.qcow2"
+  headless           = local.headless
 }
 
 build {
@@ -99,4 +103,10 @@ build {
     EOT
     ]
   }
+
+  provisioner "shell" {
+    execute_command = "echo 'packer' | {{ .Vars }} sudo -S -E bash '{{ .Path }}'"
+    scripts         = ["scripts/cleanup.sh"]
+  }
+
 }
