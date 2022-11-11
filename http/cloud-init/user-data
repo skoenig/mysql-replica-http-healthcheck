@@ -1,0 +1,9 @@
+#cloud-config
+users:
+- default
+password: packer
+chpasswd:
+  expire: False
+ssh_pwauth: true
+package_update: true
+package_upgrade: true

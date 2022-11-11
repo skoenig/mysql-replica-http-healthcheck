@@ -1,0 +1,102 @@
+packer {
+  required_plugins {
+    qemu = {
+      source  = "github.com/hashicorp/qemu"
+      version = "~> 1"
+    }
+  }
+}
+
+locals {
+  headless      = false
+  mysql_version = "5.7"
+  image_name    = "debian-11-genericcloud-amd64-daily.qcow2"
+  iso_base_url  = "https://cdimage.debian.org/cdimage/cloud/bullseye/daily/latest"
+}
+
+source "qemu" "debian" {
+  accelerator  = "kvm"
+  iso_url      = "${local.iso_base_url}/${local.image_name}"
+  iso_checksum = "file:${local.iso_base_url}/SHA512SUMS"
+  http_content = {
+    "/cloud-init/user-data" = file("http/cloud-init/user-data")
+    "/cloud-init/meta-data" = file("http/cloud-init/meta-data")
+  }
+  boot_wait        = "5s"
+  disk_image       = true
+  disk_interface   = "virtio"
+  net_device       = "virtio-net"
+  qemuargs         = [["-smbios", "type=1,serial=ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/cloud-init/"]]
+  ssh_username     = "debian"
+  ssh_password     = "packer"
+  ssh_timeout      = "1m"
+  shutdown_command = "echo 'packer' | sudo -S shutdown -P now"
+  format           = "qcow2"
+  vm_name          = "mysql.qcow2"
+  headless         = local.headless
+}
+
+build {
+  name = "build"
+  sources = [
+    "source.qemu.debian"
+  ]
+
+  provisioner "file" {
+    source      = "config/prometheus-mysqld-exporter"
+    destination = "/tmp/prometheus-mysqld-exporter"
+  }
+
+  provisioner "file" {
+    source      = "mysqlchk"
+    destination = "/tmp/"
+  }
+
+  provisioner "shell" {
+    inline = [<<-EOT
+      echo "Waiting for cloud-init to finish..."
+      cloud-init status --wait
+      STATUS=$(cloud-init status | cut -d':' -f2 )
+      if [ "$STATUS" != " done" ]
+      then
+          echo "FAILED to run cloud-init successfully."
+          cat /var/log/cloud-init.log
+          exit 1
+      fi
+    EOT
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [<<-EOT
+      #!/usr/bin/env bash
+
+      # install tools and monitoring agents
+      echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
+      sudo apt update
+      sudo apt install -y --no-install-recommends gnupg2 prometheus-mysqld-exporter
+
+      # install Percona
+      wget https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb
+      sudo dpkg -i percona-release_latest.$(lsb_release -sc)_all.deb
+      sudo apt update
+      sudo percona-release setup ps${replace(local.mysql_version, ".", "")}
+      sudo apt install -y percona-server-server-${local.mysql_version}
+      sudo systemctl disable mysql.service
+
+      # monitoring config
+      sudo mysql -e "CREATE USER IF NOT EXISTS 'prometheus'@'localhost' IDENTIFIED WITH auth_socket;"
+      sudo mysql -e "GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'prometheus'@'localhost';"
+      sudo mv -v /tmp/prometheus-mysqld-exporter /etc/default/ && sudo systemctl restart prometheus-mysqld-exporter
+
+      sudo cp -v /tmp/mysqlchk/mysqlchk.sh /opt/mysqlchk.sh
+      sudo cp -v /tmp/mysqlchk/mysqlchk@.service /etc/systemd/system
+      sudo cp -v /tmp/mysqlchk/mysqlchk.socket /etc/systemd/system
+      sudo systemctl enable --no-reload mysqlchk.socket
+
+      # Here you would setup your provisioning scripts to configure this host
+      # as a MySQL replica and start the mysql service on first boot.
+    EOT
+    ]
+  }
+}
