@@ -12,7 +12,7 @@ The health check is implemented using systemd socket activation, to provide a si
 ## Build VM Image
 As prerequisites, you need [Hashicorp Packer](https://developer.hashicorp.com/packer) and [QEMU/KVM](https://www.qemu.org). This will allow you to build the image locally:
 ```
-packer build mysql.pkr.hcl
+packer build -var headless=false mysql.pkr.hcl
 ```
 
 This is pretty useful for testing the build locally. For the actual cloud environment, the source block can then be replaced with something like this:

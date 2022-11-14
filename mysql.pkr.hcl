@@ -7,17 +7,35 @@ packer {
   }
 }
 
-locals {
-  headless      = false
-  mysql_version = "5.7"
-  image_name    = "debian-11-genericcloud-amd64-daily.qcow2"
-  iso_base_url  = "https://cdimage.debian.org/cdimage/cloud/bullseye/daily/latest"
+variable "debian_version" {
+  type    = string
+  default = "11"
+}
+
+variable "mysql_version" {
+  type    = string
+  default = "5.7"
+}
+
+variable "iso_base_url" {
+  type    = string
+  default = "https://cdimage.debian.org/cdimage/cloud/bullseye/daily/latest"
+}
+
+variable "image_name" {
+  type    = string
+  default = "debian-11-genericcloud-amd64-daily.qcow2"
+}
+
+variable "headless" {
+  type    = bool
+  default = true
 }
 
 source "qemu" "debian" {
   accelerator  = "kvm"
-  iso_url      = "${local.iso_base_url}/${local.image_name}"
-  iso_checksum = "file:${local.iso_base_url}/SHA512SUMS"
+  iso_url      = "${var.iso_base_url}/${var.image_name}"
+  iso_checksum = "file:${var.iso_base_url}/SHA512SUMS"
   http_content = {
     "/cloud-init/user-data" = file("http/cloud-init/user-data")
     "/cloud-init/meta-data" = file("http/cloud-init/meta-data")
@@ -37,7 +55,7 @@ source "qemu" "debian" {
   shutdown_command   = "echo 'packer' | sudo -S shutdown -P now"
   format             = "qcow2"
   vm_name            = "mysql.qcow2"
-  headless           = local.headless
+  headless           = var.headless
 }
 
 build {
@@ -84,8 +102,8 @@ build {
       wget https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb
       sudo dpkg -i percona-release_latest.$(lsb_release -sc)_all.deb
       sudo apt update
-      sudo percona-release setup ps${replace(local.mysql_version, ".", "")}
-      sudo apt install -y percona-server-server-${local.mysql_version}
+      sudo percona-release setup ps${replace(var.mysql_version, ".", "")}
+      sudo apt install -y percona-server-server-${var.mysql_version}
       sudo systemctl disable mysql.service
 
       # monitoring config
