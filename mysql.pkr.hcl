@@ -8,7 +8,7 @@ packer {
 }
 
 locals {
-  headless      = false
+  headless      = true
   mysql_version = "5.7"
   image_name    = "debian-11-genericcloud-amd64-daily.qcow2"
   iso_base_url  = "https://cdimage.debian.org/cdimage/cloud/bullseye/daily/latest"
@@ -37,6 +37,7 @@ source "qemu" "debian" {
   shutdown_command   = "echo 'packer' | sudo -S shutdown -P now"
   format             = "qcow2"
   vm_name            = "mysql.qcow2"
+  output_directory   = "images/debian-11-${local.mysql_version}"
   headless           = local.headless
 }
 

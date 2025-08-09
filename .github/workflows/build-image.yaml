@@ -1,0 +1,39 @@
+name: Build and Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*'
+    branches:
+      - "main"
+
+jobs:
+  build-image:
+    name: Build
+    runs-on: actuated
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install qemu
+        run: sudo apt-get update && sudo apt-get install qemu-system -y
+
+      - name: Setup packer
+        uses: hashicorp/setup-packer@main
+
+      - name: Packer Init
+        run: packer init .
+
+      - name: Packer Build
+        run: |
+          sudo chmod o+rw /dev/kvm
+          packer build .
+
+      - name: Upload image to Github Release
+        #if: startsWith(github.ref, 'refs/tags/v')
+        uses: alexellis/upload-assets@0.4.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          asset_paths: '["./images/*/*"]'
