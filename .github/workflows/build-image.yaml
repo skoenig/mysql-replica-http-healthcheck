@@ -9,9 +9,8 @@ on:
       - "main"
 
 jobs:
-  build-image:
-    name: Build
-    runs-on: actuated
+  build:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3

@@ -15,7 +15,6 @@ locals {
 }
 
 source "qemu" "debian" {
-  accelerator  = "kvm"
   iso_url      = "${local.iso_base_url}/${local.image_name}"
   iso_checksum = "file:${local.iso_base_url}/SHA512SUMS"
   http_content = {
