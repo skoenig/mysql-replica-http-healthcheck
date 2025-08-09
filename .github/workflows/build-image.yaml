@@ -28,6 +28,7 @@ jobs:
         run: |
           sudo chmod o+rw /dev/kvm
           packer build .
+          find images/
 
       - name: Upload image to Github Release
         #if: startsWith(github.ref, 'refs/tags/v')
