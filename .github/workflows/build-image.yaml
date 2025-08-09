@@ -1,39 +1,64 @@
-name: Build and Deploy
+name: Build
 
 on:
-  workflow_dispatch:
   push:
-    tags:
-      - '*'
     branches:
-      - "main"
+      - main
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-image:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Install qemu
-        run: sudo apt-get update && sudo apt-get install qemu-system -y
-
-      - name: Setup packer
-        uses: hashicorp/setup-packer@main
-
-      - name: Packer Init
-        run: packer init .
-
-      - name: Packer Build
+      - name: Install dependencies
         run: |
-          sudo chmod o+rw /dev/kvm
-          packer build .
-          find images/
+          sudo apt-get update
+          sudo apt-get install -y rsync curl packer
 
-      - name: Upload image to Github Release
-        #if: startsWith(github.ref, 'refs/tags/v')
-        uses: alexellis/upload-assets@0.4.0
+      - name: Find latest dated Debian cloud image
+        id: find-latest
+        run: |
+          set -euo pipefail
+          DEBIAN_VERSION="debian-11"
+          MYSQL_VERSION="5.7"
+          RSYNC_MODULE="rsync://cdimage.debian.org/cdimage/cloud/bullseye/"
+          IMAGE_BASENAME="${DEBIAN_VERSION}-genericcloud-amd64"
+          COMMIT_SHORT="$(git rev-parse --short=8 HEAD)"
+
+          folders=$(rsync --list-only "$RSYNC_MODULE" \
+            | awk '{print $NF}' \
+            | grep -E '^[0-9]{8}-[0-9]+/?$' \
+            | sed 's:/$::' )
+
+          latest_folder=$(printf '%s\n' $folders | sort -t- -k1,1n -k2,2n | tail -n1)
+
+          BASE_URL="https://cdimage.debian.org/cdimage/cloud/bullseye/${latest_folder}"
+          IMAGE_URL="${BASE_URL}/${IMAGE_BASENAME}-${latest_folder}.qcow2"
+
+          # Fetch checksum from remote SHA512SUMS file
+          IMAGE_CHECKSUM=$(curl -s "${BASE_URL}/SHA512SUMS" | grep "${IMAGE_BASENAME}-${latest_folder}.qcow2" | awk '{print $1}')
+
+          RELEASE_TAG="${DEBIAN_VERSION}-${MYSQL_VERSION}-${COMMIT_SHORT}-${latest_folder}"
+
+          echo "IMAGE_URL=$IMAGE_URL"           >> $GITHUB_ENV
+          echo "IMAGE_CHECKSUM=sha512:${IMAGE_CHECKSUM}" >> $GITHUB_ENV
+          echo "RELEASE_TAG=$RELEASE_TAG"       >> $GITHUB_ENV
+          echo "LATEST_FOLDER=$latest_folder"   >> $GITHUB_ENV
+
+      - name: Build image with Packer
+        run: |
+          packer init .
+          packer build .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: "Debian ${env.RELEASE_TAG}"
+          files: |
+            images/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          asset_paths: '["./images/*/*"]'

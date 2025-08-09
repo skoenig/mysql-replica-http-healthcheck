@@ -7,16 +7,26 @@ packer {
   }
 }
 
+variable "debian_version" {
+  type    = string
+  default = "11"
+}
+
+variable "mysql_version" {
+  type    = string
+  default = "5.7"
+}
+
+
 locals {
   headless      = true
-  mysql_version = "5.7"
-  image_name    = "debian-11-genericcloud-amd64-daily.qcow2"
-  iso_base_url  = "https://cdimage.debian.org/cdimage/cloud/bullseye/daily/latest"
+  iso_url       = "${env("IMAGE_URL")}"
+  iso_checksum  = "${env("IMAGE_CHECKSUM")}"
 }
 
 source "qemu" "debian" {
-  iso_url      = "${local.iso_base_url}/${local.image_name}"
-  iso_checksum = "file:${local.iso_base_url}/SHA512SUMS"
+  iso_url      = local.iso_url
+  iso_checksum = local.iso_checksum
   http_content = {
     "/cloud-init/user-data" = file("http/cloud-init/user-data")
     "/cloud-init/meta-data" = file("http/cloud-init/meta-data")
