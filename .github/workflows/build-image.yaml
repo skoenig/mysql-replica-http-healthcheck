@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 env:
   MYSQL_VERSION: "5.7"
