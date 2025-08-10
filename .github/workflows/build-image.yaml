@@ -56,6 +56,8 @@ jobs:
 
       - name: Cancel if release exists already
         if: steps.check-release.outputs.exists == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh run cancel ${{ github.run_id }}
           gh run watch ${{ github.run_id }}
