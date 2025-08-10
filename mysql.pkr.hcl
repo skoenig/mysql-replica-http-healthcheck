@@ -104,23 +104,23 @@ build {
       sudo apt update
       sudo apt install -y --no-install-recommends gnupg2 prometheus-mysqld-exporter
 
-      # install Percona
-      wget https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb
-      sudo dpkg -i percona-release_latest.$(lsb_release -sc)_all.deb
-      sudo apt update
-      sudo percona-release setup ps${replace(var.mysql_version, ".", "")}
-      sudo apt install -y percona-server-server-${var.mysql_version}
-      sudo systemctl disable mysql.service
+      ## install Percona
+      #wget https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb
+      #sudo dpkg -i percona-release_latest.$(lsb_release -sc)_all.deb
+      #sudo apt update
+      #sudo percona-release setup ps${replace(var.mysql_version, ".", "")}
+      #sudo apt install -y percona-server-server-${var.mysql_version}
+      #sudo systemctl disable mysql.service
 
-      # monitoring config
-      sudo mysql -e "CREATE USER IF NOT EXISTS 'prometheus'@'localhost' IDENTIFIED WITH auth_socket;"
-      sudo mysql -e "GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'prometheus'@'localhost';"
-      sudo mv -v /tmp/prometheus-mysqld-exporter /etc/default/ && sudo systemctl restart prometheus-mysqld-exporter
+      ## monitoring config
+      #sudo mysql -e "CREATE USER IF NOT EXISTS 'prometheus'@'localhost' IDENTIFIED WITH auth_socket;"
+      #sudo mysql -e "GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'prometheus'@'localhost';"
+      #sudo mv -v /tmp/prometheus-mysqld-exporter /etc/default/ && sudo systemctl restart prometheus-mysqld-exporter
 
-      sudo cp -v /tmp/mysqlchk/mysqlchk.sh /opt/mysqlchk.sh
-      sudo cp -v /tmp/mysqlchk/mysqlchk@.service /etc/systemd/system
-      sudo cp -v /tmp/mysqlchk/mysqlchk.socket /etc/systemd/system
-      sudo systemctl enable --no-reload mysqlchk.socket
+      #sudo cp -v /tmp/mysqlchk/mysqlchk.sh /opt/mysqlchk.sh
+      #sudo cp -v /tmp/mysqlchk/mysqlchk@.service /etc/systemd/system
+      #sudo cp -v /tmp/mysqlchk/mysqlchk.socket /etc/systemd/system
+      #sudo systemctl enable --no-reload mysqlchk.socket
 
       # Here you would setup your provisioning scripts to configure this host
       # as a MySQL replica and start the mysql service on first boot.
@@ -128,9 +128,8 @@ build {
     ]
   }
 
-  provisioner "shell" {
-    execute_command = "echo 'packer' | {{ .Vars }} sudo -S -E bash '{{ .Path }}'"
-    scripts         = ["scripts/cleanup.sh"]
-  }
-
+  #provisioner "shell" {
+  #  execute_command = "echo 'packer' | {{ .Vars }} sudo -S -E bash '{{ .Path }}'"
+  #  scripts         = ["scripts/cleanup.sh"]
+  #}
 }

@@ -23,9 +23,12 @@ jobs:
         uses: hashicorp/setup-packer@main
 
       - name: Build image with Packer
+        env:
+          PACKER_LOG: "1"
         run: |
           packer init .
           packer build -var kvm=false .
+          find images/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
