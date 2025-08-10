@@ -22,11 +22,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y qemu-system rsync curl
-
       - name: Determine latest Debian image
         id: debian-image
         run: |
@@ -53,6 +48,11 @@ jobs:
 
           echo "image_url=$IMAGE_URL" >> "$GITHUB_OUTPUT"
           echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system
 
       - name: Setup Packer
         uses: hashicorp/setup-packer@main
