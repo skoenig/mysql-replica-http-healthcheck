@@ -7,17 +7,12 @@ packer {
   }
 }
 
-variable "debian_version" {
-  type    = string
-  default = "11"
-}
-
 variable "mysql_version" {
   type    = string
   default = "5.7"
 }
 
-variable "iso_base_url" {
+variable "image_base_url" {
   type    = string
   default = "https://cdimage.debian.org/cdimage/cloud/bullseye/daily/latest"
 }
@@ -39,8 +34,8 @@ variable "kvm" {
 
 source "qemu" "debian" {
   accelerator  = var.kvm ? "kvm" : "none"
-  iso_url      = "${var.iso_base_url}/${var.image_name}"
-  iso_checksum = "file:${var.iso_base_url}/SHA512SUMS"
+  iso_url      = "${var.image_base_url}/${var.image_name}"
+  iso_checksum = "file:${var.image_base_url}/SHA512SUMS"
   http_content = {
     "/cloud-init/user-data" = file("http/cloud-init/user-data")
     "/cloud-init/meta-data" = file("http/cloud-init/meta-data")
