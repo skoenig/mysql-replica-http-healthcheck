@@ -1,4 +1,4 @@
-name: Build Image
+name: Build & Release Image
 
 on:
   push:
@@ -9,28 +9,65 @@ on:
 permissions:
   contents: write
 
+env:
+  MYSQL_VERSION: "5.7"
+  IMAGE_PATH: "cdimage.debian.org/cdimage/cloud/bullseye"
+  DEBIAN_VERSION: "debian-11"
+  IMAGE_BASENAME: "debian-11-genericcloud-amd64"
+
 jobs:
   build-image:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install qemu
+      - name: Determine latest Debian image
+        id: debian-image
+        run: |
+          set -euo pipefail
+          COMMIT_SHORT=$(git rev-parse --short=8 HEAD)
+
+          folders=$(rsync --list-only "rsync://$IMAGE_PATH/" \
+            | awk '{print $NF}' \
+            | grep -E '^[0-9]{8}-[0-9]+/?$' \
+            | sed 's:/$::')
+
+          if [ -z "$folders" ]; then
+            echo "No dated folders found"
+            exit 1
+          fi
+
+          latest_folder=$(printf '%s\n' $folders | sort -t- -k1,1n -k2,2n | tail -n1)
+          IMAGE_URL="https://${IMAGE_PATH}/${latest_folder}/${IMAGE_BASENAME}-${latest_folder}.qcow2"
+
+          echo "Checking $IMAGE_URL ..."
+          curl -sSf --head "$IMAGE_URL" >/dev/null
+
+          RELEASE_TAG="${DEBIAN_VERSION}-${MYSQL_VERSION}-${COMMIT_SHORT}-${latest_folder}"
+
+          echo "image_url=$IMAGE_URL" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Install Qemu
         run: sudo apt-get update && sudo apt-get install qemu-system -y
 
       - name: Setup Packer
         uses: hashicorp/setup-packer@main
 
       - name: Build image with Packer
+        env:
+          IMAGE_URL: ${{ steps.debian-image.outputs.image_url }}
         run: |
           packer init .
-          packer build -var kvm=false .
+          packer build \
+            -var kvm=false \
+            -var image_base_url="$(dirname "${IMAGE_URL}")" \
+            -var image_name="$(basename "${IMAGE_URL}")" \
+            .
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: 'latest'
-          draft: true
-          files: |
-            images/**/*
+          tag_name: ${{ steps.debian-image.outputs.release_tag }}
+          files: images/*
