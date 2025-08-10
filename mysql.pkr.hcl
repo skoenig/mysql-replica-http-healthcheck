@@ -32,8 +32,13 @@ variable "headless" {
   default = true
 }
 
+variable "kvm" {
+  type    = bool
+  default = true
+}
+
 source "qemu" "debian" {
-  accelerator  = "kvm"
+  accelerator  = var.kvm ? "kvm" : "none"
   iso_url      = "${var.iso_base_url}/${var.image_name}"
   iso_checksum = "file:${var.iso_base_url}/SHA512SUMS"
   http_content = {
@@ -51,10 +56,11 @@ source "qemu" "debian" {
   qemuargs           = [["-smbios", "type=1,serial=ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/cloud-init/"]]
   ssh_username       = "debian"
   ssh_password       = "packer"
-  ssh_timeout        = "1m"
+  ssh_timeout        = "5m"
   shutdown_command   = "echo 'packer' | sudo -S shutdown -P now"
   format             = "qcow2"
   vm_name            = "mysql.qcow2"
+  output_directory   = "images/"
   headless           = var.headless
 }
 

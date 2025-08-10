@@ -1,0 +1,36 @@
+name: Build Image
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install qemu
+        run: sudo apt-get update && sudo apt-get install qemu-system -y
+
+      - name: Setup Packer
+        uses: hashicorp/setup-packer@main
+
+      - name: Build image with Packer
+        run: |
+          packer init .
+          packer build -var kvm=false .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: 'latest'
+          draft: true
+          files: |
+            images/**/*
