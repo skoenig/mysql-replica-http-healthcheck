@@ -49,6 +49,17 @@ jobs:
           echo "image_url=$IMAGE_URL" >> "$GITHUB_OUTPUT"
           echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
 
+      - id: check-release
+        uses: mukunku/release-exists-action@v1.0.0
+        with:
+          tag: ${{ steps.debian-image.outputs.release_tag }}
+
+      - name: Cancel if release exists already
+        if: steps.check-release.outputs.exists == 'true'
+        run: |
+          gh run cancel ${{ github.run_id }}
+          gh run watch ${{ github.run_id }}
+
       - name: Install Qemu
         run: sudo apt-get update && sudo apt-get install qemu-system -y
 
