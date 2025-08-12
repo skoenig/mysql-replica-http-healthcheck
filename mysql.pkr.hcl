@@ -22,6 +22,11 @@ variable "image_name" {
   default = "debian-11-genericcloud-amd64-daily.qcow2"
 }
 
+variable "release_tag" {
+  type    = string
+  default = "latest"
+}
+
 variable "headless" {
   type    = bool
   default = true
@@ -54,7 +59,7 @@ source "qemu" "debian" {
   ssh_timeout        = "5m"
   shutdown_command   = "echo 'packer' | sudo -S shutdown -P now"
   format             = "qcow2"
-  vm_name            = "mysql.qcow2"
+  vm_name            = "mysql-${var.release_tag}.qcow2"
   output_directory   = "images/"
   headless           = var.headless
 }

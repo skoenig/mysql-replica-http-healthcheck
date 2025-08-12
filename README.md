@@ -10,12 +10,17 @@ The health check is implemented using systemd socket activation, to provide a si
 - https://mgdm.net/weblog/systemd-socket-activation/
 
 ## Build VM Image
-As prerequisites, you need [Hashicorp Packer](https://developer.hashicorp.com/packer) and [QEMU/KVM](https://www.qemu.org). This will allow you to build the image locally:
+As prerequisites, you need [Hashicorp Packer](https://developer.hashicorp.com/packer) and [QEMU/KVM](https://www.qemu.org). This will allow you to build the image from the latest Debian locally:
 ```
 packer build -var headless=false mysql.pkr.hcl
 ```
+To base the build on a specific Debian version and name the resulting image like in the Github Actions pipeline, adapt the env vars in `.env` and run:
+```
+source .env
+packer build -var headless=false $(scripts/create-tag.sh) .
+```
 
-This is pretty useful for testing the build locally. For the actual cloud environment, the source block can then be replaced with something like this:
+For building in GCP, the source block can then be replaced with something like this:
 ```
  source "googlecompute" "debian" {
    project_id   = "your-project-id"
