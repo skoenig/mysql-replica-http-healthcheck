@@ -29,10 +29,12 @@ The Terraform manifests in `infra/` create the infrastructure for this scenario 
 
 To deploy this demo:
 
-1. Create a GCP project.
-2. Install Terraform or OpenTofu CLI.
-3. Configure Terraform with your GCP credentials.
-4. Update the `infra/variables.tf` file with your `project_id` and `region`.
-5. Initialize / Plan / Apply Terraform: `cd infra/ && terraform init && terraform plan && terraform apply`
+1. Install Terraform or OpenTofu CLI.
+2. Create a `infra/.env` file with your `BILLING_ACCOUNT_ID`, `REGION`, and `ZONE`.
+3. Spin up the demo project: `cd infra/ && ./setup.sh`.
+4. Acquire your GCP credentials: `gcloud auth application-default login`
+5. Initialize / Plan / Apply Terraform: `cd infra/ && terraform init && terraform plan && terraform apply`.
 6. After the deployment completes, Terraform will output the load balancer's IP address (`lb_ip`) and DNS name (`lb_dns`).
 7. You can then access the MySQL replicas through the load balancer's IP address on port `3306` from within your VPC, or resolve the DNS name from within the VPC.
+
+Optional - cleanup: `cd infra/ && ./teardown.sh <PROJECT_ID>`
