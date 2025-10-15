@@ -9,7 +9,7 @@ packer {
 
 variable "mysql_version" {
   type    = string
-  default = "5.7"
+  default = "8.4"
 }
 
 variable "image_base_url" {
@@ -62,6 +62,7 @@ source "qemu" "debian" {
   vm_name            = "mysql-${var.release_tag}.qcow2"
   output_directory   = "images/"
   headless           = var.headless
+  memory             = 1024
 }
 
 build {
@@ -108,8 +109,8 @@ build {
       wget https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb
       sudo dpkg -i percona-release_latest.$(lsb_release -sc)_all.deb
       sudo apt update
-      sudo percona-release setup ps${replace(var.mysql_version, ".", "")}
-      sudo apt install -y percona-server-server-${var.mysql_version}
+      sudo percona-release setup ps${replace(var.mysql_version, ".", "")}-lts
+      sudo apt install -y percona-server-server
       sudo systemctl disable mysql.service
 
       # monitoring config

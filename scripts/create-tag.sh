@@ -32,8 +32,10 @@ then
   echo "image_base_url=$IMAGE_BASE_URL" >> "$GITHUB_OUTPUT"
   echo "image_name=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
   echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+  echo "mysql_version=$MYSQL_VERSION" >> "$GITHUB_OUTPUT"
 else
   echo -n "-var image_base_url=$IMAGE_BASE_URL "
   echo -n "-var image_name=$IMAGE_NAME "
   echo -n "-var release_tag=$RELEASE_TAG "
+  echo -n "-var mysql_version=$MYSQL_VERSION "
 fi
