@@ -42,7 +42,8 @@ jobs:
           gh run watch ${{ github.run_id }}
 
       - name: Install Qemu
-        run: sudo apt-get update && sudo apt-get install qemu-system -y
+        run: sudo apt-get update && sudo apt-get install qemu-system-x86 qemu-utils -y
+
 
       - name: Setup Packer
         uses: hashicorp/setup-packer@main
