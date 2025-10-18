@@ -39,8 +39,8 @@ then
     http_response 200 "Replica OK"
 fi
 
-replica_lag=$(mysql -S /var/run/mysqld/mysqld.sock -e "SHOW SLAVE STATUS\G" -ss 2>/dev/null \
-    | grep 'Seconds_Behind_Master' \
+replica_lag=$(mysql -S /var/run/mysqld/mysqld.sock -e "SHOW REPLICA STATUS\G" -ss 2>/dev/null \
+    | grep 'Seconds_Behind_Source' \
     | awk '{ print $2 }')
 exit_code=$?
 
