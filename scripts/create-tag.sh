@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Determine the latest Debian image
+# Determine the latest image folder
 folders=$(rsync --list-only "rsync://$IMAGE_PATH/" \
   | awk '{print $NF}' \
   | grep -E '^[0-9]{8}-[0-9]+/?$' \
@@ -15,11 +15,10 @@ fi
 
 latest_folder=$(printf '%s\n' $folders | sort -t- -k1,1n -k2,2n | tail -n1)
 IMAGE_BASE_URL="https://${IMAGE_PATH}/${latest_folder}"
-IMAGE_NAME="${IMAGE_BASENAME}-${latest_folder}.qcow2"
-IMAGE_URL="${IMAGE_BASE_URL}/${IMAGE_NAME}"
+IMAGE_NAME="${DEBIAN_VERSION}-${IMAGE_FLAVOR}-${latest_folder}.qcow2"
 
 # Check if the image URL is accessible
-curl -sSf --head "$IMAGE_URL" >/dev/null
+curl -sSf --head "${IMAGE_BASE_URL}/${IMAGE_NAME}" >/dev/null
 
 # Get the short commit hash
 COMMIT_SHORT=$(git rev-parse --short=8 HEAD)
